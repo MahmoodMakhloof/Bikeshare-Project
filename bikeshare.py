@@ -30,7 +30,7 @@ def get_filters():
         city = (input('Which City would you need to analyze (Chicago , New york city , Washington) ?\n')).lower()
         if city in Cities:
             break
-    print( "................. ANALYZING "+city.upper() +" .................")
+    print( "ANALYZING "+city.upper() +" ......................")
     
     while True:
         Filter =(input('Do you want to filter data by month , day or both (if you don\'t like to filter enter None)?\n')).lower()
@@ -91,9 +91,6 @@ def load_data(city, month, day,Filter):
     
     df = pd.read_csv(CITY_DATA[city])
     
-    if city == 'washington':
-        df['Gender']='Unknown'
-        df['Birth Year']='Unknown'
     df['Start Time'] = pd.to_datetime(df['Start Time'])
     if Filter == 'month':
         Months ={'january':1,'february':2,'march':3,'april':4,'may':5,'june':6}
@@ -130,7 +127,7 @@ def time_stats(df,Filter):
 
         # display the most common start hour
         df['Hour'] = df['Start Time'].dt.hour
-        print('Most frequent start hour : ',(df['Hour'].mode()[0]).astype(str)+':00')
+        print('Most frequent start hour ',(df['Hour'].mode()[0]).astype(str)+':00')
        
     elif Filter == 'day':
         # display the most common month
@@ -139,12 +136,12 @@ def time_stats(df,Filter):
     
         # display the most common start hour
         df['Hour'] = df['Start Time'].dt.hour
-        print('Most frequent start hour : ',(df['Hour'].mode()[0]).astype(str)+':00')     
+        print('Most frequent start hour ',(df['Hour'].mode()[0]).astype(str)+':00')     
         
     elif Filter == 'both':
         # display the most common start hour
         df['Hour'] = df['Start Time'].dt.hour
-        print('Most frequent start hour : ',(df['Hour'].mode()[0]).astype(str)+':00')
+        print('Most frequent start hour ',(df['Hour'].mode()[0]).astype(str)+':00')
     
     elif Filter =='none':
         # display the most common month
@@ -157,7 +154,7 @@ def time_stats(df,Filter):
     
         # display the most common start hour
         df['Hour'] = df['Start Time'].dt.hour
-        print('Most frequent start hour : ',(df['Hour'].mode()[0]).astype(str)+':00')
+        print('Most frequent start hour ',(df['Hour'].mode()[0]).astype(str)+':00')
     
     
 
@@ -179,7 +176,7 @@ def station_stats(df):
 
     # display most frequent combination of start station and end station trip
     df['Trip'] = df['Start Station'].astype(str)+' -> '+df['End Station'].astype(str)
-    print('Most frequent combination of start station and end station trip : ',df['Trip'].mode()[0])
+    print('Most frequent trip : ',df['Trip'].mode()[0])
     
     
     print("\nThis took %s seconds." % (time.time() - start_time))
@@ -192,10 +189,10 @@ def trip_duration_stats(df):
     start_time = time.time()
 
     # display total travel time
-    print('Total travel time : ',df['Trip Duration'].sum())
+    print('Total travel time : %s Hours' %(int((df['Trip Duration'].sum())/3600)))
 
     # display mean travel time
-    print('Average trip duration : ', df['Trip Duration'].mean())
+    print('Average trip duration : %s Minutes' %(int((df['Trip Duration'].mean())/60)))
 
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
@@ -211,18 +208,54 @@ def user_stats(df):
     print('Counts of user types :\n',df['User Type'].value_counts())
 
     # Display counts of gender
-    print('Counts of gender :\n',df['Gender'].value_counts())
+    try:
+        print('Counts of gender :\n',df['Gender'].value_counts())
+    except:
+        #print('Error, Gender coulmn not existed in this data !!')
+        pass
 
     # Display earliest, most recent, and most common year of birth
-    print('Most earliest year of birth : ',df['Birth Year'].min())
-    print('Most recent year of birth: ',df['Birth Year'].max())
-    print('Most common year of birth : ',df['Birth Year'].mode()[0])
-
+    try:
+        print('Most earliest year of birth : ',int(df['Birth Year'].min()))
+        print('Most recent year of birth: ',int(df['Birth Year'].max()))
+        print('Most common year of birth : ',int(df['Birth Year'].mode()[0]))
+    except:
+        #print('Error, Birth Year coulmn not existed in this data !!')
+        pass
 
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
 
-
+def display_raws(df,i):
+    # init a counter to get i raws every time
+    count = 0
+    
+    # this while loop for first i raws and return a flag that determine 
+    # if i need to ask the user again for next i raws .. etc
+    while True:
+        c = (input("Do you want to display The first "+str(i)+" raws of data ? (yes/no) : ")).lower()
+        if c == 'yes':
+            display_iraws_flag = True
+            # print a specific raws with all coulmns
+            print(df.iloc[count:count+i,:])
+            break
+        elif c == 'no':
+            display_iraws_flag = False
+            break
+        else:
+            continue
+    
+    # we will check if the flag is true to ask the user again
+    if display_iraws_flag == True:
+        # while yes , display the the next i raws
+        while (input("Next "+str(i)+" Raws ? (yes or no) ")).lower() == 'yes':
+            # increament the counter by i
+            count=count+i
+            # print a specific raws with all coulmns
+            print(df.iloc[count:count+i,:])
+        
+        
+    
 def main():
     while True:
         city, month, day ,Filter = get_filters()
@@ -231,6 +264,7 @@ def main():
         station_stats(df)
         trip_duration_stats(df)
         user_stats(df)
+        display_raws(df,3)
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
